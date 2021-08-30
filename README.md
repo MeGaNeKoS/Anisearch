@@ -8,6 +8,7 @@ Anilist API module for python. you only need to copy the Anilist folder to your 
 
 ```python
 from Anisearch import Anilist
+
 instance = Anilist()
 ```
 
