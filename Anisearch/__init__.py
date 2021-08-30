@@ -4,7 +4,7 @@ from .search import *
 
 class Anilist:
     """
-        Initialize a new instance to the Anilist API.
+        Initialize a new instance to the Anisearch API.
     """
 
     def __init__(self):
@@ -13,7 +13,7 @@ class Anilist:
         """
 
         self.settings = {'header': {'Content-Type': 'application/json',
-                                    'User-Agent': 'Anilist (github.com/MeGaNeKoS/Anilist)',
+                                    'User-Agent': 'Anisearch (github.com/MeGaNeKoS/Anisearch)',
                                     'Accept': 'application/json'},
                          'authurl': 'https://anilist.co/api',
                          'apiurl': 'https://graphql.anilist.co'}
