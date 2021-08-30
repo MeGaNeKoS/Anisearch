@@ -1,4 +1,4 @@
-# Anilist
+# Anisearch
 Anilist API module for python. you only need to copy the Anilist folder to your own script.
 
 ### Executing program
