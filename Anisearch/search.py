@@ -131,11 +131,22 @@ class AnilistSearch:
                 }
             """}
 
-    def request(self, term, page, per_page, query_string) -> Union[dict, None]:
+    def request(self, term, page, per_page, query_string, *, num_retries=10) -> Union[dict, None]:
         variables = {"query": term, "page": page, "perpage": per_page}
         r = requests.post(self.settings['apiurl'],
                           headers=self.settings['header'],
                           json={'query': query_string, 'variables': variables})
+        if r.status_code == 429:
+            # it hit too many request limit
+            import time
+
+            for _ in range(num_retries):
+                time.sleep(int(r.headers["Retry-After"]))
+                r = requests.post(self.settings['apiurl'],
+                                  headers=self.settings['header'],
+                                  json={'query': query_string, 'variables': variables})
+                if r.status_code != 429:
+                    break
         jsd = r.text
 
         try:
@@ -145,7 +156,7 @@ class AnilistSearch:
         else:
             return jsd
 
-    def character(self, term: str, page: int = 1, per_page: int = 10, query_string: str = None) -> Union[dict, None]:
+    def character(self, term: str, page: int = 1, per_page: int = 10, query_string: str = None, *args, **kwargs) -> Union[dict, None]:
         """
         Search for a character by term.
         Results are paginated by default. We need to specifies which page we wanted.
@@ -161,9 +172,9 @@ class AnilistSearch:
         if query_string is None:
             query_string = self.DEFAULT_QUERY["character"]
 
-        return self.request(term, page, per_page, query_string)
+        return self.request(term, page, per_page, query_string, *args, **kwargs)
 
-    def anime(self, term: str, page: int = 1, per_page: int = 10, query_string: str = None) -> Union[dict, None]:
+    def anime(self, term: str, page: int = 1, per_page: int = 10, query_string: str = None, *args, **kwargs) -> Union[dict, None]:
         """
         Search for an anime by term.
         Results are paginated by default. We need to specifies which page we wanted.
@@ -179,9 +190,9 @@ class AnilistSearch:
         """
         if query_string is None:
             query_string = self.DEFAULT_QUERY['anime']
-        return self.request(term, page, per_page, query_string)
+        return self.request(term, page, per_page, query_string, *args, **kwargs)
 
-    def manga(self, term: str, page: int = 1, per_page: int = 10, query_string: str = None) -> Union[dict, None]:
+    def manga(self, term: str, page: int = 1, per_page: int = 10, query_string: str = None, *args, **kwargs) -> Union[dict, None]:
         """
         Search for a manga by term.
         Results are paginated by default. We need to specifies which page we wanted.
@@ -196,9 +207,9 @@ class AnilistSearch:
         """
         if query_string is None:
             query_string = self.DEFAULT_QUERY['manga']
-        return self.request(term, page, per_page, query_string)
+        return self.request(term, page, per_page, query_string, *args, **kwargs)
 
-    def staff(self, term: str, page: int = 1, per_page: int = 10, query_string: str = None) -> Union[dict, None]:
+    def staff(self, term: str, page: int = 1, per_page: int = 10, query_string: str = None, *args, **kwargs) -> Union[dict, None]:
         """
         Search for staff by term. Staff means actors, directors, etc.
         Results are paginated by default. We need to specifies which page we wanted.
@@ -213,9 +224,9 @@ class AnilistSearch:
         """
         if query_string is None:
             query_string = self.DEFAULT_QUERY['staff']
-        return self.request(term, page, per_page, query_string)
+        return self.request(term, page, per_page, query_string, *args, **kwargs)
 
-    def studio(self, term: str, page: int = 1, per_page: int = 10, query_string: str = None) -> Union[dict, None]:
+    def studio(self, term: str, page: int = 1, per_page: int = 10, query_string: str = None, *args, **kwargs) -> Union[dict, None]:
         """
         Search for a studio by term.
         Results are paginated by default. We need to specifies which page we wanted.
@@ -230,4 +241,4 @@ class AnilistSearch:
         """
         if query_string is None:
             query_string = self.DEFAULT_QUERY['studio']
-        return self.request(term, page, per_page, query_string)
+        return self.request(term, page, per_page, query_string, *args, **kwargs)

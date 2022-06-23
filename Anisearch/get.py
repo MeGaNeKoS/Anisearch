@@ -87,11 +87,20 @@ class AnilistGet:
                 }
             """}
 
-    def request(self, item_id, query_string) -> Union[dict, None]:
+    def request(self, item_id, query_string, *, num_retries=10) -> Union[dict, None]:
         variables = {"id": item_id}
         r = requests.post(self.settings['apiurl'],
                           headers=self.settings['header'],
                           json={'query': query_string, 'variables': variables})
+        if r.status_code == 429:
+            # it hit too many request limit
+            import time
+
+            for _ in range(num_retries):
+                time.sleep(int(r.headers["Retry-After"]))
+                r = requests.post(self.settings['apiurl'],
+                                  headers=self.settings['header'],
+                                  json={'query': query_string, 'variables': variables})
         jsd = r.text
 
         try:
@@ -101,7 +110,7 @@ class AnilistGet:
         else:
             return jsd
 
-    def anime(self, item_id, query_string=None) -> Union[dict, None]:
+    def anime(self, item_id, query_string=None, *args, **kwargs) -> Union[dict, None]:
         """
         The function to retrieve an anime's details.
 
@@ -112,9 +121,9 @@ class AnilistGet:
         """
         if query_string is None:
             query_string = self.DEFAULT_QUERY["anime"]
-        return self.request(item_id, query_string)
+        return self.request(item_id, query_string, *args, **kwargs)
 
-    def manga(self, item_id, query_string=None) -> Union[dict, None]:
+    def manga(self, item_id, query_string=None, *args, **kwargs) -> Union[dict, None]:
         """
         The function to retrieve an anime's details.
 
@@ -125,9 +134,9 @@ class AnilistGet:
         """
         if query_string is None:
             query_string = self.DEFAULT_QUERY["manga"]
-        return self.request(item_id, query_string)
+        return self.request(item_id, query_string, *args, **kwargs)
 
-    def staff(self, item_id, query_string=None) -> Union[dict, None]:
+    def staff(self, item_id, query_string=None, *args, **kwargs) -> Union[dict, None]:
         """
         The function to retrieve a manga's details.
         :param int item_id: the anime's ID
@@ -137,9 +146,9 @@ class AnilistGet:
         """
         if query_string is None:
             query_string = self.DEFAULT_QUERY["staff"]
-        return self.request(item_id, query_string)
+        return self.request(item_id, query_string, *args, **kwargs)
 
-    def studio(self, item_id, query_string=None) -> Union[dict, None]:
+    def studio(self, item_id, query_string=None, *args, **kwargs) -> Union[dict, None]:
         """
         The function to retrieve a studio's details.
 
@@ -150,9 +159,9 @@ class AnilistGet:
         """
         if query_string is None:
             query_string = self.DEFAULT_QUERY["studio"]
-        return self.request(item_id, query_string)
+        return self.request(item_id, query_string, *args, **kwargs)
 
-    def character(self, item_id, query_string=None) -> Union[dict, None]:
+    def character(self, item_id, query_string=None, *args, **kwargs) -> Union[dict, None]:
         """
         The function to retrieve a character's details.
 
@@ -163,4 +172,4 @@ class AnilistGet:
         """
         if query_string is None:
             query_string = self.DEFAULT_QUERY["character"]
-        return self.request(item_id, query_string)
+        return self.request(item_id, query_string, *args, **kwargs)
