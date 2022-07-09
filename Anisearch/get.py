@@ -1,13 +1,11 @@
-import json
 from typing import Union
-
-import requests
 
 
 class AnilistGet:
-    def __init__(self, settings):
+    def __init__(self, settings, *, request_func):
         self.settings = settings
-        self.DEFAULT_QUERY = {"anime": """
+        self.DEFAULT_QUERY = {
+            "anime": """
                 query ($id: Int) {
                     Media(id: $id, type: ANIME) {
                         title {
@@ -31,7 +29,7 @@ class AnilistGet:
                     }
                 }
             """,
-                              "manga": """
+            "manga": """
                 query ($id: Int) {
                     Media(id: $id, type: MANGA) {
                         title {
@@ -51,7 +49,7 @@ class AnilistGet:
                     }
                 }
             """,
-                              "staff": """
+            "staff": """
                 query ($id: Int) {
                     Staff(id: $id) {
                         name {
@@ -64,14 +62,14 @@ class AnilistGet:
                     }
                 }
             """,
-                              "studio": """
+            "studio": """
                 query ($id: Int) {
                     Studio(id: $id) {
                         name
                     }
                 }
             """,
-                              "character": """
+            "character": """
                 query ($id: Int) {
                     Character (id: $id) {
                         name {
@@ -85,91 +83,71 @@ class AnilistGet:
                         }
                     }
                 }
-            """}
+            """
+        }
 
-    def request(self, item_id, query_string, *, num_retries=10) -> Union[dict, None]:
+        self._request = request_func
+
+    def anime(self, item_id: int, *args, **kwargs) -> Union[dict, None]:
+        """
+        The function to retrieve an anime's details.
+
+        :param int item_id: the anime's ID
+        :return: List of dictionaries which are anime objects or None
+        """
+
         variables = {"id": item_id}
-        r = requests.post(self.settings['apiurl'],
-                          headers=self.settings['header'],
-                          json={'query': query_string, 'variables': variables})
-        if r.status_code == 429:
-            # it hit too many request limit
-            import time
+        return self._request(variables, self.DEFAULT_QUERY["anime"], *args, **kwargs)
 
-            for _ in range(num_retries):
-                time.sleep(int(r.headers["Retry-After"]))
-                r = requests.post(self.settings['apiurl'],
-                                  headers=self.settings['header'],
-                                  json={'query': query_string, 'variables': variables})
-        jsd = r.text
-
-        try:
-            jsd = json.loads(jsd)
-        except ValueError:
-            return None
-        else:
-            return jsd
-
-    def anime(self, item_id, query_string=None, *args, **kwargs) -> Union[dict, None]:
-        """
-        The function to retrieve an anime's details.
-
-        :param int item_id: the anime's ID
-        :param str query_string: What info you interested to?
-        :return: dict or None
-        :rtype: dict or NoneType
-        """
-        if query_string is None:
-            query_string = self.DEFAULT_QUERY["anime"]
-        return self.request(item_id, query_string, *args, **kwargs)
-
-    def manga(self, item_id, query_string=None, *args, **kwargs) -> Union[dict, None]:
-        """
-        The function to retrieve an anime's details.
-
-        :param int item_id: the anime's ID
-        :param str query_string: What info you interested to?
-        :return: dict or None
-        :rtype: dict or NoneType
-        """
-        if query_string is None:
-            query_string = self.DEFAULT_QUERY["manga"]
-        return self.request(item_id, query_string, *args, **kwargs)
-
-    def staff(self, item_id, query_string=None, *args, **kwargs) -> Union[dict, None]:
-        """
-        The function to retrieve a manga's details.
-        :param int item_id: the anime's ID
-        :param str query_string: What info you interested to?
-        :return: dict or None
-        :rtype: dict or NoneType
-        """
-        if query_string is None:
-            query_string = self.DEFAULT_QUERY["staff"]
-        return self.request(item_id, query_string, *args, **kwargs)
-
-    def studio(self, item_id, query_string=None, *args, **kwargs) -> Union[dict, None]:
-        """
-        The function to retrieve a studio's details.
-
-        :param int item_id: the anime's ID
-        :param str query_string: What info you interested to?
-        :return: dict or None
-        :rtype: dict or NoneType
-        """
-        if query_string is None:
-            query_string = self.DEFAULT_QUERY["studio"]
-        return self.request(item_id, query_string, *args, **kwargs)
-
-    def character(self, item_id, query_string=None, *args, **kwargs) -> Union[dict, None]:
+    def character(self, item_id: int, *args, **kwargs) -> Union[dict, None]:
         """
         The function to retrieve a character's details.
 
         :param int item_id: the anime's ID
-        :param str query_string: What info you interested to?
-        :return: dict or None
-        :rtype: dict or NoneType
+        :return: List of dictionaries which are character objects or None
         """
-        if query_string is None:
-            query_string = self.DEFAULT_QUERY["character"]
-        return self.request(item_id, query_string, *args, **kwargs)
+        variables = {"id": item_id}
+        return self._request(variables, self.DEFAULT_QUERY["character"], *args, **kwargs)
+
+    def manga(self, item_id: int, *args, **kwargs) -> Union[dict, None]:
+        """
+        The function to retrieve an anime's details.
+
+        :param int item_id: the anime's ID
+        :return: List of dictionaries which are manga objects or None
+        """
+
+        variables = {"id": item_id}
+        return self._request(variables, self.DEFAULT_QUERY["manga"], *args, **kwargs)
+
+    def staff(self, item_id: int, *args, **kwargs) -> Union[dict, None]:
+        """
+        The function to retrieve a manga's details.
+        :param int item_id: the anime's ID
+        :return: List of dictionaries which are staff objects or None
+        """
+
+        variables = {"id": item_id}
+        return self._request(variables, self.DEFAULT_QUERY["staff"], *args, **kwargs)
+
+    def studio(self, item_id: int, *args, **kwargs) -> Union[dict, None]:
+        """
+        The function to retrieve a studio's details.
+
+        :param int item_id: the anime's ID
+        :return: List of dictionaries which are studio objects or None
+        """
+
+        variables = {"id": item_id}
+        return self._request(variables, self.DEFAULT_QUERY["studio"], *args, **kwargs)
+
+    def custom_query(self, variables: dict, query_string: str, *args, **kwargs) -> Union[dict, None]:
+        """
+        The function to retrieve custom query.
+
+        :param str query_string: the query string
+        :param dict variables: the variables
+        :return: List of dictionaries objects or None
+        """
+
+        return self._request(variables, query_string, *args, **kwargs)

@@ -1,15 +1,13 @@
-import json
 from typing import Union
-
-import requests
 
 
 class AnilistSearch:
-    def __init__(self, settings):
+    def __init__(self, settings, *, request_func):
         self.settings = settings
-        self.DEFAULT_QUERY = {"anime": """
-                query ($query: String, $page: Int, $perpage: Int) {
-                    Page (page: $page, perPage: $perpage) {
+        self.DEFAULT_QUERY = {
+            "anime": """
+                query ($query: String, $page: Int, $perPage: Int) {
+                    Page (page: $page, perPage: $perPage) {
                         pageInfo {
                             total
                             currentPage
@@ -41,9 +39,9 @@ class AnilistSearch:
                     }
                 }
             """,
-                              "manga": """
-                query ($query: String, $page: Int, $perpage: Int) {
-                    Page (page: $page, perPage: $perpage) {
+            "manga": """
+                query ($query: String, $page: Int, $perPage: Int) {
+                    Page (page: $page, perPage: $perPage) {
                         pageInfo {
                             total
                             currentPage
@@ -70,9 +68,9 @@ class AnilistSearch:
                     }
                 }
             """,
-                              "staff": """
-                query ($query: String, $page: Int, $perpage: Int) {
-                    Page (page: $page, perPage: $perpage) {
+            "staff": """
+                query ($query: String, $page: Int, $perPage: Int) {
+                    Page (page: $page, perPage: $perPage) {
                         pageInfo {
                             total
                             currentPage
@@ -92,9 +90,9 @@ class AnilistSearch:
                     }
                 }
             """,
-                              "studio": """
-                query ($query: String, $page: Int, $perpage: Int) {
-                    Page (page: $page, perPage: $perpage) {
+            "studio": """
+                query ($query: String, $page: Int, $perPage: Int) {
+                    Page (page: $page, perPage: $perPage) {
                         pageInfo {
                             total
                             currentPage
@@ -108,9 +106,9 @@ class AnilistSearch:
                     }
                 }
             """,
-                              "character": """
-                query ($query: String, $page: Int, $perpage: Int) {
-                    Page (page: $page, perPage: $perpage) {
+            "character": """
+                query ($query: String, $page: Int, $perPage: Int) {
+                    Page (page: $page, perPage: $perPage) {
                         pageInfo {
                             total
                             currentPage
@@ -129,116 +127,117 @@ class AnilistSearch:
                         }
                     }
                 }
-            """}
+            """
+        }
 
-    def request(self, term, page, per_page, query_string, *, num_retries=10) -> Union[dict, None]:
-        variables = {"query": term, "page": page, "perpage": per_page}
-        r = requests.post(self.settings['apiurl'],
-                          headers=self.settings['header'],
-                          json={'query': query_string, 'variables': variables})
-        if r.status_code == 429:
-            # it hit too many request limit
-            import time
+        self._request = request_func
 
-            for _ in range(num_retries):
-                time.sleep(int(r.headers["Retry-After"]))
-                r = requests.post(self.settings['apiurl'],
-                                  headers=self.settings['header'],
-                                  json={'query': query_string, 'variables': variables})
-                if r.status_code != 429:
-                    break
-        jsd = r.text
+    def anime(self,
+              term: str,
+              page: int = 1,
+              per_page: int = 10,
+              *args, **kwargs) -> Union[dict, None]:
+        """
+        Search for an anime by term.
+        Results are paginated by default. We need to specify which page we wanted.
+        Per page specifies how many per page to request. 10 is just the example from the API docs.
 
-        try:
-            jsd = json.loads(jsd)
-        except ValueError:
-            return None
-        else:
-            return jsd
+        :param str term: Name to search by
+        :param int page: Which page are we requesting? starts at 1.
+        :param int per_page : How many results per page? defaults to 10.
+        :return: List of dictionaries which are anime objects or None
+        """
 
-    def character(self, term: str, page: int = 1, per_page: int = 10, query_string: str = None, *args, **kwargs) -> Union[dict, None]:
+        variables = {"query": term, "page": page, "perPage": per_page}
+        return self._request(variables, self.DEFAULT_QUERY['anime'], *args, **kwargs)
+
+    def character(self,
+                  term: str,
+                  page: int = 1,
+                  per_page: int = 10,
+                  *args, **kwargs) -> Union[dict, None]:
         """
         Search for a character by term.
         Results are paginated by default. We need to specifies which page we wanted.
         Per page specifies how many per page to request. 10 is just the example from the API docs.
-        
+
         :param str term: Name to search by
         :param int page: Which page are we requesting? Starts at 1.
         :param int per_page: How many results per page are we requesting? default to 10.
-        :param str query_string: What info you interested to?
         :return: Json object with returned results.
         :rtype: Json object with returned results.
         """
-        if query_string is None:
-            query_string = self.DEFAULT_QUERY["character"]
 
-        return self.request(term, page, per_page, query_string, *args, **kwargs)
+        variables = {"query": term, "page": page, "perPage": per_page}
+        return self._request(variables, self.DEFAULT_QUERY['character'], *args, **kwargs)
 
-    def anime(self, term: str, page: int = 1, per_page: int = 10, query_string: str = None, *args, **kwargs) -> Union[dict, None]:
-        """
-        Search for an anime by term.
-        Results are paginated by default. We need to specifies which page we wanted.
-        Per page specifies how many per page to request. 10 is just the example from the API docs.
-        
-        :param str term: Name to search by
-        :param int page: Which page are we requesting? starts at 1.
-        :param int per_page : How many results per page? defaults to 10.
-        :param str query_string: What info you interested to?
-        :param str query_string: What info you interested to?
-        :return: List of dictionaries which are anime objects or None
-        :rtype: list of dict or NoneType
-        """
-        if query_string is None:
-            query_string = self.DEFAULT_QUERY['anime']
-        return self.request(term, page, per_page, query_string, *args, **kwargs)
-
-    def manga(self, term: str, page: int = 1, per_page: int = 10, query_string: str = None, *args, **kwargs) -> Union[dict, None]:
+    def manga(self,
+              term: str,
+              page: int = 1,
+              per_page: int = 10,
+              *args, **kwargs) -> Union[dict, None]:
         """
         Search for a manga by term.
         Results are paginated by default. We need to specifies which page we wanted.
         Per page specifies how many per page to request. 10 is just the example from the API docs.
-        
+
         :param str term: Name to search by
         :param int page: Which page are we requesting? Starts at 1.
         :param int per_page: How many results per page? defaults to 10.
-        :param str query_string: What info you interested to?
+
         :return: List of dictionaries which are manga objects or None
         :rtype: list of dict or NoneType
         """
-        if query_string is None:
-            query_string = self.DEFAULT_QUERY['manga']
-        return self.request(term, page, per_page, query_string, *args, **kwargs)
+        variables = {"query": term, "page": page, "perPage": per_page}
+        return self._request(variables, self.DEFAULT_QUERY['manga'], *args, **kwargs)
 
-    def staff(self, term: str, page: int = 1, per_page: int = 10, query_string: str = None, *args, **kwargs) -> Union[dict, None]:
+    def staff(self,
+              term: str,
+              page: int = 1,
+              per_page: int = 10,
+              *args, **kwargs) -> Union[dict, None]:
         """
         Search for staff by term. Staff means actors, directors, etc.
         Results are paginated by default. We need to specifies which page we wanted.
         Per page specifies how many per page to request. 10 is just the example from the API docs.
-        
+
         :param str term: Name to search by
         :param int page: What page are we requesting? Starts at 1.
         :param int per_page: How many results per page? Defaults to 10.
-        :param str query_string: What info you interested to?
         :return: List of dictionaries which are staff objects or None
-        :rtype: list of dict or NoneType
         """
-        if query_string is None:
-            query_string = self.DEFAULT_QUERY['staff']
-        return self.request(term, page, per_page, query_string, *args, **kwargs)
 
-    def studio(self, term: str, page: int = 1, per_page: int = 10, query_string: str = None, *args, **kwargs) -> Union[dict, None]:
+        variables = {"query": term, "page": page, "perPage": per_page}
+        return self._request(variables, self.DEFAULT_QUERY['staff'], *args, **kwargs)
+
+    def studio(self,
+               term: str,
+               page: int = 1,
+               per_page: int = 10,
+               *args, **kwargs) -> Union[dict, None]:
         """
         Search for a studio by term.
         Results are paginated by default. We need to specifies which page we wanted.
         Per page specifies how many per page to request. 10 is just the example from the API docs.
-        
+
         :param str term: Name to search by
         :param int page: What page are we requesting? starts at 1.
         :param int per_page: How many results per page? defaults to 10.
-        :param str query_string: What info you interested to?
         :return: List of dictionaries which are studio objects or None
-        :rtype: list of dict or NoneType
         """
-        if query_string is None:
-            query_string = self.DEFAULT_QUERY['studio']
-        return self.request(term, page, per_page, query_string, *args, **kwargs)
+
+        variables = {"query": term, "page": page, "perPage": per_page}
+        return self._request(variables, self.DEFAULT_QUERY['studio'], *args, **kwargs)
+
+    def custom_query(self,
+                     variables: dict,
+                     query_string: str,
+                     *args, **kwargs) -> Union[dict, None]:
+        """
+        Search for a custom query.
+        :param str query_string: Search query
+        :param dict variables: Variables to pass to the query.
+        :return: Json object with returned results or None.
+        """
+
+        return self._request(variables, query_string, *args, **kwargs)
