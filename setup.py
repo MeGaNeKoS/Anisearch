@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='Anisearch',
-    version='1.0.1',
+    version='1.0.2',
     description="Anisearch is the lib for accessing anime or manga from anilist.co on the Python Platform.",
     long_description=open("README.md").read() + "\n\n" + open("CHANGELOG.txt").read(),
     long_description_content_type="text/markdown",
