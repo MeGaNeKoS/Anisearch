@@ -2,9 +2,7 @@ from typing import Union
 
 
 class AnilistSearch:
-    def __init__(self, settings, *, request_func):
-        self.settings = settings
-        self.DEFAULT_QUERY = {
+    DEFAULT_QUERY = {
             "anime": """
                 query ($query: String, $page: Int, $perPage: Int) {
                     Page (page: $page, perPage: $perPage) {
@@ -130,7 +128,8 @@ class AnilistSearch:
             """
         }
 
-        self._request = request_func
+    def __init__(self, connection):
+        self.connection = connection
 
     def anime(self,
               term: str,
@@ -149,7 +148,7 @@ class AnilistSearch:
         """
 
         variables = {"query": term, "page": page, "perPage": per_page}
-        return self._request(variables, self.DEFAULT_QUERY['anime'], *args, **kwargs)
+        return self.connection.request(variables, AnilistSearch.DEFAULT_QUERY['anime'], *args, **kwargs)
 
     def character(self,
                   term: str,
@@ -169,7 +168,7 @@ class AnilistSearch:
         """
 
         variables = {"query": term, "page": page, "perPage": per_page}
-        return self._request(variables, self.DEFAULT_QUERY['character'], *args, **kwargs)
+        return self.connection.request(variables, AnilistSearch.DEFAULT_QUERY['character'], *args, **kwargs)
 
     def manga(self,
               term: str,
@@ -189,7 +188,7 @@ class AnilistSearch:
         :rtype: list of dict or NoneType
         """
         variables = {"query": term, "page": page, "perPage": per_page}
-        return self._request(variables, self.DEFAULT_QUERY['manga'], *args, **kwargs)
+        return self.connection.request(variables, AnilistSearch.DEFAULT_QUERY['manga'], *args, **kwargs)
 
     def staff(self,
               term: str,
@@ -208,7 +207,7 @@ class AnilistSearch:
         """
 
         variables = {"query": term, "page": page, "perPage": per_page}
-        return self._request(variables, self.DEFAULT_QUERY['staff'], *args, **kwargs)
+        return self.connection.request(variables, AnilistSearch.DEFAULT_QUERY['staff'], *args, **kwargs)
 
     def studio(self,
                term: str,
@@ -227,7 +226,7 @@ class AnilistSearch:
         """
 
         variables = {"query": term, "page": page, "perPage": per_page}
-        return self._request(variables, self.DEFAULT_QUERY['studio'], *args, **kwargs)
+        return self.connection.request(variables, AnilistSearch.DEFAULT_QUERY['studio'], *args, **kwargs)
 
     def custom_query(self,
                      variables: dict,
@@ -240,4 +239,4 @@ class AnilistSearch:
         :return: Json object with returned results or None.
         """
 
-        return self._request(variables, query_string, *args, **kwargs)
+        return self.connection.request(variables, query_string, *args, **kwargs)
