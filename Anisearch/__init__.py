@@ -1,8 +1,8 @@
 import logging
 
-from .get import AnilistGet
-from .search import AnilistSearch
-from .connection import Connection
+from Anisearch.get import AnilistGet
+from Anisearch.search import AnilistSearch
+from Anisearch.connection import Connection
 
 
 class Anilist:
