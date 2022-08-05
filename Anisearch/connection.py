@@ -43,6 +43,11 @@ class Connection:
                     break
             else:
                 Connection.logger.error(f"failed to get {variables} after {num_retries} retries")
+                if Connection.logger.level == logging.DEBUG:
+                    import pickle
+                    import time
+                    with open(f'Anisearch-connection-{time.time_ns()}.pkl', 'wb') as f:
+                        pickle.dump(r, f)
                 return None
 
         jsd = r.text
