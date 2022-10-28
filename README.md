@@ -31,10 +31,35 @@ instance.search.studio("J.C. Staff") # Studio search result for J.C. Staff.
 ```
 A note about the searching and getting:
 ```python
-search(term, page = 1, perpage = 10, query_string=None)
-get(item_id, query_string=None)
+search(term, page = 1, perpage = 10)
+get(item_id)
 ```
-Pagination is done automatically in the API. By default you'll get 10 results per page. 
-If you want more, just change the perpage value. pageInfo is always the first result in the returned data.
+Pagination is done automatically in the API. By default, you'll get 10 results per page. 
+If you want more, just change the per page value. pageInfo is always the first result in the returned data.
 Pages start at 1 and if you want another page, just replace page with the next number. 
-query_string is to set what info you want to displayed.
+query_string is to set what info you want to display.
+
+### Customization
+You can set your own settings as follows
+```python
+import logging
+from Anisearch import Anilist
+# for init instance
+SETTINGS = {
+    'header': {
+        'Content-Type': 'application/json',
+        'User-Agent': 'Anisearch (github.com/MeGaNeKoS/Anisearch)',
+        'Accept': 'application/json'},
+    'api_url': 'https://graphql.anilist.co'
+}
+request_param = {}  # this is for the requests lib parameters.
+instance = Anilist(log_level=logging.INFO, settings = SETTINGS, request_param = request_param)
+
+# for instance get/search parameters
+retry = 10
+instance.get.anime(13601, num_retries=retry)  # default 10
+```
+
+### Todo
+* Add more error handling when the API returns an error.
+    - currently is limited to 429 too many requests. You can help me by providing a log when other errors occur.

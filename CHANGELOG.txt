@@ -1,5 +1,12 @@
 Change Log
 ==========
+1.0.2 (28/10/2022)
+- Object/Memory optimization
+- Supress any error by returning error message
+- Better retry mechanism
+- Change the default query to match the anilist website
+
+
 1.0.1 (23/06/2022)
 - Add rate limit(too many request) handler
 

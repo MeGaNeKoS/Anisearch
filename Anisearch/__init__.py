@@ -1,65 +1,29 @@
-import json
 import logging
-from typing import Union
+import warnings
 
-import requests
-
-from .get import AnilistGet
-from .search import AnilistSearch
-
-SETTINGS = {'header': {'Content-Type': 'application/json',
-                       'User-Agent': 'Anisearch (github.com/MeGaNeKoS/Anisearch)',
-                       'Accept': 'application/json'},
-            'apiurl': 'https://graphql.anilist.co'}
+from Anisearch.connection import Connection
+from Anisearch.get import AnilistGet
+from Anisearch.search import AnilistSearch
 
 
-class Anilist:
-    """
-        Initialize a new instance to the Anisearch API.
-    """
+class Anilist(Connection):
+    logger = logging.getLogger(__name__)
 
-    def __init__(self, log_level=logging.root.level):
-        """
+    def __init__(self, *, settings=None, request_param=None, log_name=None, log_level=None):
+        # use package's logger if log_name is None
+        if log_name:
+            self.logger = logging.getLogger(f"{__name__}@{log_name}")
+            self.logger.setLevel(log_level or logging.root.level)  # set log level for this package
+        elif log_level:
+            warnings.warn("log_level is ignored if log_name is None, package's logger is used!")
+        self.logger.debug('Initializing Anilist Connection')
+        super(Anilist, self).__init__(settings, request_param)
 
-        """
-        self.logger = logging.getLogger(__name__)
-        self.logger.setLevel(log_level)
+        self.logger.debug('Initializing Anilist API')
+        self.search = AnilistSearch(self.request)
+        self.get = AnilistGet(self.request)
 
-        self.logger.info('Initializing Anilist API')
-
-        self.settings = SETTINGS
-        self.search = AnilistSearch(self.settings, request_func=self.request)
-        self.get = AnilistGet(self.settings, request_func=self.request)
-
-    def request(self,
-                variables: dict,
-                query_string: str,
-                *, num_retries=10) -> Union[dict, None]:
-        r = requests.post(self.settings['apiurl'],
-                          headers=self.settings['header'],
-                          json={'query': query_string, 'variables': variables})
-
-        if r.status_code == 429:
-            # it hit too many request limit
-            import time
-
-            for _ in range(num_retries):
-                time.sleep(int(r.headers.get('Retry-After', default=60)))
-                r = requests.post(self.settings['apiurl'],
-                                  headers=self.settings['header'],
-                                  json={'query': query_string, 'variables': variables})
-                if r.status_code != 429:
-                    break
-            else:
-                self.logger.error(f"failed to get {variables} after {num_retries} retries")
-                return None
-
-        jsd = r.text
-
-        try:
-            jsd = json.loads(jsd)
-        except ValueError as e:
-            self.logger.error(f"{str(e)}:\n{jsd}")
-            return None
-        else:
-            return jsd
+    # set package's logger level
+    @classmethod
+    def set_logger_level(cls, level):
+        Anilist.logger.setLevel(level)
