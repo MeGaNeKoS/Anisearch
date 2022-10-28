@@ -8,7 +8,7 @@ with open("CHANGELOG.txt", encoding="utf-8") as f:
 
 setup(
     name='Anisearch',
-    version='1.0.2',
+    version='1.1.0',
     description="Anisearch is the lib for accessing anime or manga from anilist.co on the Python Platform.",
     long_description=README + "\n\n" + CHANGELOG,
     long_description_content_type="text/markdown",
