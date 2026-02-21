@@ -1,11 +1,14 @@
 import json
 import logging
 import pickle
-import random
 import time
 from typing import Union
 
 import requests
+
+from Anisearch.errors import RateLimitError, ServerError, GraphQLError
+from Anisearch.errors import ConnectionError as AnilistConnectionError
+from Anisearch.retry import RetryStrategy
 
 SETTINGS = {
     'header': {
@@ -19,15 +22,17 @@ SETTINGS = {
 class Connection:
     logger = logging.getLogger(__name__)
 
-    def __init__(self, setting=None, custom_param=None):
+    def __init__(self, setting=None, custom_param=None, retry=None):
         self.settings = setting or SETTINGS
         self.custom_param = custom_param or {}
         self.session = requests.Session()
+        # retry=<unset sentinel> means use default; None means no retries
+        self._retry = retry
 
     def request(self,
                 variables: dict,
                 query_string: str,
-                *, num_retries=10,
+                *, num_retries=None,
                 backoff_in_seconds=1,
                 max_wait=60,
                 **kwargs) -> Union[dict, None]:
@@ -36,49 +41,59 @@ class Connection:
         self.logger.debug(f'Query: {query_string}')
 
         variables = {k: v for k, v in variables.items() if v is not None}
+
+        strategy = self._retry
+        if num_retries is not None and strategy is None:
+            # Legacy call with explicit num_retries but no strategy — create a temporary one
+            strategy = RetryStrategy(max_retries=num_retries, max_wait=max_wait,
+                                     backoff_base=backoff_in_seconds)
+
+        max_attempts = (strategy.max_retries + 1) if strategy else (num_retries or 1)
+
         result = None
-        for retry in range(num_retries):
+        for attempt in range(max_attempts):
             try:
-                result = self.session.post(self.settings['api_url'],
-                                           headers=self.settings['header'],
-                                           json={'query': query_string, 'variables': variables},
-                                           timeout=10,
-                                           **self.custom_param, **kwargs)
-            except requests.exceptions.ConnectionError:
-                self.logger.warning(f'ConnectionError: {retry + 1}/{num_retries}')
-                sleep = (backoff_in_seconds + random.uniform(0, 1)) * 2 ** retry
-                time.sleep(sleep)
-                continue
+                result = self.session.post(
+                    self.settings['api_url'],
+                    headers=self.settings['header'],
+                    json={'query': query_string, 'variables': variables},
+                    timeout=10,
+                    **self.custom_param, **kwargs)
+            except requests.exceptions.ConnectionError as e:
+                self.logger.warning(f'ConnectionError: {attempt + 1}/{max_attempts}')
+                if strategy and strategy.handle_connection_error(e, attempt):
+                    continue
+                if not strategy:
+                    raise AnilistConnectionError(e)
+                raise AnilistConnectionError(e)
+
             self.logger.debug(f'Response: {result.text}')
+
             if result.status_code == 429:
-                # it hit too many request limit
-                time.sleep(int(result.headers.get('Retry-After', default=60)))
-                continue
-            elif result.status_code >= 500:
-                # server error
+                retry_after = int(result.headers.get('Retry-After', 60))
+                if strategy and strategy.handle_rate_limit(retry_after, attempt):
+                    continue
+                raise RateLimitError(retry_after)
+
+            if result.status_code >= 500:
                 self.logger.error(f'Anilist API returned {result.status_code} status code')
-                # backoff exponentially
-                sleep = (backoff_in_seconds + random.uniform(0, 1)) * 2 ** retry
-                time.sleep(min(sleep, max_wait))
-                continue
+                if strategy and strategy.handle_server_error(result.status_code, attempt):
+                    continue
+                raise ServerError(result.status_code, result.text)
+
             try:
-                return result.json()
+                data = result.json()
             except json.decoder.JSONDecodeError as e:
                 Connection.logger.error(f"{str(e)}:\n{result.status_code} {result.text}")
                 if self.logger.level == logging.DEBUG:
-                    with open(f'Anisearch-connection-{time.asctime()}-{retry}.pkl', 'wb') as f:
+                    with open(f'Anisearch-connection-{time.asctime()}-{attempt}.pkl', 'wb') as f:
                         pickle.dump(result, f)
                 return {
                     "errors": [
                         {
                             "message": "Failed to convert to JSON",
                             "status": result.status_code,
-                            "locations": [
-                                {
-                                    "line": e.lineno,
-                                    "column": e.colno
-                                }
-                            ]
+                            "locations": [{"line": e.lineno, "column": e.colno}]
                         }
                     ],
                     "data": {"Media": []}
@@ -87,13 +102,15 @@ class Connection:
                 Connection.logger.error(f"{str(e)}:\n{result.status_code} {result.text}")
                 raise
 
-        Connection.logger.error(f"failed to get {variables} after hit max {num_retries} retries")
+            return data
+
+        Connection.logger.error(f"failed to get {variables} after hit max {max_attempts} retries")
         if Connection.logger.level == logging.DEBUG and result:
             with open(f'Anisearch-connection-{time.time_ns()}.pkl', 'wb') as f:
                 pickle.dump(result, f)
         return {
             "errors": [
-                {"message": f"failed to get {variables} after hit max {num_retries} retries"}
+                {"message": f"failed to get {variables} after hit max {max_attempts} retries"}
             ],
             "data": {"Media": []}
         }

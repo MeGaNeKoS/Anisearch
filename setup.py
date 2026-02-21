@@ -8,14 +8,14 @@ with open("CHANGELOG.txt", encoding="utf-8") as f:
 
 setup(
     name='Anisearch',
-    version='1.1.0',
+    version='2.0.0',
     description="Anisearch is the lib for accessing anime or manga from anilist.co on the Python Platform.",
     long_description=README + "\n\n" + CHANGELOG,
     long_description_content_type="text/markdown",
     url='https://github.com/MeGaNeKoS/Anisearch',
     license='MIT',
     author='めがねこ',
-    author_email='evictory91@gmail.com',
+    author_email='neko@meganeko.dev',
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
@@ -24,5 +24,8 @@ setup(
     ],
     packages=find_packages(),
     keywords="Anime Manga Anilist",
-    install_requires=['requests']
+    install_requires=['requests'],
+    extras_require={
+        'async': ['aiohttp'],
+    }
 )

@@ -7,15 +7,15 @@ class TestAnilist(unittest.TestCase):
     def test_Anilist(self):
         anilist = Anisearch.Anilist()
 
-        # Get
-        self.assertIsInstance(anilist.get.anime(13601), dict)
-        self.assertIsInstance(anilist.get.manga(64127), dict)
-        self.assertIsInstance(anilist.get.staff(113803), dict)
-        self.assertIsInstance(anilist.get.studio(7), dict)
+        # Get by ID
+        self.assertIsInstance(anilist.media(id=13601, type="ANIME").title().genres().episodes().execute(), dict)
+        self.assertIsInstance(anilist.media(id=64127, type="MANGA").title().genres().chapters().execute(), dict)
+        self.assertIsInstance(anilist.staff(id=113803).name("full").primary_occupations().execute(), dict)
+        self.assertIsInstance(anilist.studio(id=7).name().media(fields=lambda m: m.title("romaji")).execute(), dict)
 
         # Search
-        self.assertIsInstance(anilist.search.anime(search="Sword"), dict)
-        self.assertIsInstance(anilist.search.manga(search="Sword"), dict)
-        self.assertIsInstance(anilist.search.character(search="Tsutsukakushi"), dict)
-        self.assertIsInstance(anilist.search.staff(search="Kantoku"), dict)
-        self.assertIsInstance(anilist.search.studio(search="J.C. Staff"), dict)
+        self.assertIsInstance(anilist.media(search="Sword", type="ANIME").title().page(1, per_page=10).execute(), dict)
+        self.assertIsInstance(anilist.media(search="Sword", type="MANGA").title().page(1, per_page=10).execute(), dict)
+        self.assertIsInstance(anilist.character(search="Tsutsukakushi").name("full").page(1, per_page=10).execute(), dict)
+        self.assertIsInstance(anilist.staff(search="Kantoku").name("full").page(1, per_page=10).execute(), dict)
+        self.assertIsInstance(anilist.studio(search="J.C. Staff").name().page(1, per_page=10).execute(), dict)
