@@ -232,6 +232,67 @@ class BaseBuilder:
         return await self._async_request(variables, query, **kwargs)
 
 
+class BaseMutationBuilder:
+    """Base class for GraphQL mutation builders.
+
+    Each subclass defines _mutation_name, _default_fields, and _arg_types.
+    """
+
+    _mutation_name = ""       # e.g. "SaveMediaListEntry"
+    _default_fields = ["id"]  # default return fields
+    _arg_types = {}           # {"mediaId": "Int", "status": "MediaListStatus", ...}
+
+    def __init__(self, request_fn, async_request_fn, args):
+        self._request = request_fn
+        self._async_request = async_request_fn
+        self._args = args
+        self._fields_override = None
+
+    def fields(self, *field_names):
+        """Select which fields to return from the mutation."""
+        self._fields_override = list(field_names)
+        return self
+
+    def _compile(self):
+        """Build the GraphQL mutation string and variables dict."""
+        variables = {k: v for k, v in self._args.items() if v is not None}
+        return_fields = self._fields_override or self._default_fields
+        fields_str = " ".join(return_fields)
+
+        # Build variable declarations and argument pass-through
+        var_decls = []
+        arg_parts = []
+        for key, val in variables.items():
+            gql_type = self._arg_types.get(key)
+            if gql_type is None:
+                # Fallback type inference
+                gql_type = _infer_type(key, val)
+            var_decls.append(f"${key}: {gql_type}")
+            arg_parts.append(f"{key}: ${key}")
+
+        var_str = f"({', '.join(var_decls)})" if var_decls else ""
+        arg_str = f"({', '.join(arg_parts)})" if arg_parts else ""
+
+        query = f"""mutation {var_str} {{
+  {self._mutation_name}{arg_str} {{
+      {fields_str}
+  }}
+}}"""
+        return query, variables
+
+    def execute(self, **kwargs):
+        """Compile and execute the mutation synchronously."""
+        query, variables = self._compile()
+        return self._request(variables, query, **kwargs)
+
+    async def execute_async(self, **kwargs):
+        """Compile and execute the mutation asynchronously."""
+        if self._async_request is None:
+            raise RuntimeError("Async connection not available. Install aiohttp: pip install anisearch[async]")
+        query, variables = self._compile()
+        return await self._async_request(variables, query, **kwargs)
+
+
 def _format_arg_value(v):
     """Format a Python value as a GraphQL inline argument value."""
     if isinstance(v, bool):
