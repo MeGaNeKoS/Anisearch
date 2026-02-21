@@ -1,65 +1,151 @@
 # Anisearch
-Anilist API module for python. you only need to copy the Anilist folder to your own script.
 
-### Executing program
+Declarative GraphQL query builder for the [AniList](https://anilist.co) API.
 
-* How to run the program
-* Import module
+## Installation
+
+```bash
+pip install Anisearch
+
+# For async support
+pip install Anisearch[async]
+```
+
+## Quick Start
 
 ```python
 from Anisearch import Anilist
 
-instance = Anilist()
+anilist = Anilist()
+
+# Get anime by ID
+result = anilist.media(id=13601, type="ANIME") \
+    .id().title("romaji", "english").episodes().status() \
+    .execute()
+print(result)
 ```
 
-From there you can get information from Anilist using their new GraphQL API.
-To get data on a known ID.
+## Builder API
+
+Every query starts from an `Anilist` instance. Call `.media()`, `.character()`, `.staff()`, or `.studio()` to get a builder, chain the fields you want, then `.execute()`.
+
+### Media
+
 ```python
-instance.get.anime(13601) # Return data on PSYCHO-PASS 
-instance.get.manga(64127) # Return data on Mahouka Koukou no Rettousei
-instance.get.staff(113803) # Return data on Kantoku
-instance.get.studio(7) # Return data on J.C. Staff
+result = anilist.media(search="Psycho-Pass", type="ANIME") \
+    .id().title("romaji", "english").genres().episodes().status() \
+    .execute()
 ```
 
-Searching is also making a return.
-```python
-instance.search.anime("Sword") # Anime search results for Sword.
-instance.search.manga("Sword") # Manga search results for Sword.
-instance.search.character("Tsutsukakushi") # Character search results for Tsutsukakushi.
-instance.search.staff("Kantoku") # Staff search results for Kantoku.
-instance.search.studio("J.C. Staff") # Studio search result for J.C. Staff.
-```
-A note about the searching and getting:
-```python
-search(term, page = 1, perpage = 10)
-get(item_id)
-```
-Pagination is done automatically in the API. By default, you'll get 10 results per page. 
-If you want more, just change the per page value. pageInfo is always the first result in the returned data.
-Pages start at 1 and if you want another page, just replace page with the next number. 
-query_string is to set what info you want to display.
+### Character
 
-### Customization
-You can set your own settings as follows
 ```python
-import logging
-from Anisearch import Anilist
-# for init instance
-SETTINGS = {
-    'header': {
-        'Content-Type': 'application/json',
-        'User-Agent': 'Anisearch (github.com/MeGaNeKoS/Anisearch)',
-        'Accept': 'application/json'},
-    'api_url': 'https://graphql.anilist.co'
+result = anilist.character(search="Saber") \
+    .id().name().image() \
+    .execute()
+```
+
+### Staff
+
+```python
+result = anilist.staff(id=113803) \
+    .id().name().image() \
+    .execute()
+```
+
+### Studio
+
+```python
+result = anilist.studio(search="J.C. Staff") \
+    .id().name() \
+    .execute()
+```
+
+## Pagination
+
+Wrap any query with `.paginate()` to get paginated results:
+
+```python
+result = anilist.media(search="Sword", type="ANIME") \
+    .id().title("romaji") \
+    .paginate(page=1, per_page=10) \
+    .execute()
+```
+
+## Nested Fields
+
+Some fields accept sub-field selections:
+
+```python
+result = anilist.media(id=13601) \
+    .title("romaji", "english", "native") \
+    .cover_image("large", "medium") \
+    .characters(sort="FAVOURITES_DESC", per_page=5)(lambda c: c.id().name().image()) \
+    .execute()
+```
+
+## Fragments
+
+Reuse field selections across queries with `Fragment`:
+
+```python
+from Anisearch import Fragment
+
+basic_info = Fragment.media(lambda m: m.id().title("romaji", "english").genres())
+
+result = anilist.media(id=13601).use(basic_info).episodes().execute()
+```
+
+## Retry Configuration
+
+Customize retry behavior with `RetryStrategy`:
+
+```python
+from Anisearch import RetryStrategy
+
+retry = RetryStrategy(
+    max_retries=5,
+    on_rate_limit="wait",       # "wait" or "raise"
+    on_server_error="backoff",  # "backoff" or "raise"
+    max_wait=60,
+)
+anilist = Anilist(retry=retry)
+```
+
+## Raw Query
+
+For queries the builder doesn't cover, use `raw_query`:
+
+```python
+query = """
+query ($id: Int) {
+  Media(id: $id) {
+    id
+    title { romaji }
+  }
 }
-request_param = {}  # this is for the requests lib parameters.
-instance = Anilist(log_level=logging.INFO, settings = SETTINGS, request_param = request_param)
-
-# for instance get/search parameters
-retry = 10
-instance.get.anime(13601, num_retries=retry)  # default 10
+"""
+result = anilist.raw_query({"id": 13601}, query)
 ```
 
-### Todo
-* Add more error handling when the API returns an error.
-    - currently is limited to 429 too many requests. You can help me by providing a log when other errors occur.
+## Async Usage
+
+All builders support async execution (requires `aiohttp`):
+
+```python
+import asyncio
+from Anisearch import Anilist
+
+async def main():
+    anilist = Anilist()
+    result = await anilist.media(id=13601) \
+        .id().title("romaji") \
+        .execute_async()
+    print(result)
+
+asyncio.run(main())
+```
+
+## License
+
+MIT

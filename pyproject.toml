@@ -1,9 +1,45 @@
 [build-system]
-requires = ["setuptools>=42.0", "wheel"]
+requires = ["setuptools>=64", "setuptools-scm>=8"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "Anisearch"
+dynamic = ["version"]
+description = "Declarative GraphQL query builder for the AniList API."
+readme = {file = "README.md", content-type = "text/markdown"}
+license = "MIT"
+requires-python = ">=3.8"
+authors = [
+    {name = "めがねこ", email = "neko@meganeko.dev"},
+]
+keywords = ["anime", "manga", "anilist", "graphql"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+dependencies = ["requests"]
+
+[project.optional-dependencies]
+async = ["aiohttp"]
+
+[project.urls]
+Homepage = "https://github.com/MeGaNeKoS/Anisearch"
+Repository = "https://github.com/MeGaNeKoS/Anisearch"
+
+[tool.setuptools.packages.find]
+include = ["Anisearch*"]
+
+[tool.setuptools_scm]
+write_to = "Anisearch/_version.py"
+fallback_version = "0.0.0"
 
 [tool.pytest.ini_options]
 addopts = "--cov=Anisearch"
-testpaths = [
-    "tests",
-]
+testpaths = ["tests"]
