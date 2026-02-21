@@ -48,6 +48,7 @@ class BaseBuilder:
     """
 
     _graphql_type = "Media"  # Override in subclasses
+    _response_model = None   # Override in subclasses with a dataclass type
 
     def __init__(self, request_fn, async_request_fn, root_field, root_args):
         self._request = request_fn
@@ -64,8 +65,8 @@ class BaseBuilder:
             self._fragments.append(frag)
         return self
 
-    def page(self, page=1, per_page=10):
-        """Wrap this query in Page { pageInfo { ... } }."""
+    def page(self, page: int = 1, per_page: int = 10):
+        """Wrap the entire query in ``Page { pageInfo { … } }``, returning a ``PageResult``."""
         self._page_args = {"page": page, "perPage": per_page}
         return self
 
@@ -126,8 +127,15 @@ class BaseBuilder:
         elif fields_fn:
             # fields_fn provided but no node_type — treat as raw
             parts.append(f"{graphql_name}{arg_str}")
+        elif node_type:
+            # No fields_fn but has node_type — default to { nodes { id } }
+            if edge_fields:
+                edge_inner = " ".join(edge_fields)
+                parts.append(f"{graphql_name}{arg_str} {{ edges {{ {edge_inner} node {{ id }} }} }}")
+            else:
+                parts.append(f"{graphql_name}{arg_str} {{ nodes {{ id }} }}")
         else:
-            # No sub-selection — use default minimal selection
+            # No sub-selection at all — bare field
             parts.append(f"{graphql_name}{arg_str}")
 
         for p in parts:
@@ -150,6 +158,17 @@ class BaseBuilder:
         if not all_fields:
             # Default to id if no fields selected
             all_fields = ["id"]
+
+        # Check for duplicate field names
+        seen = {}
+        for field_str in all_fields:
+            name = re.split(r'[\s({]', field_str, 1)[0]
+            if name in seen:
+                raise ValueError(
+                    f"Field '{name}' was added multiple times. "
+                    f"Combine all arguments into a single .{name}() call."
+                )
+            seen[name] = True
 
         fields_str = "\n      ".join(all_fields)
         variables = dict(self._root_args)
@@ -219,17 +238,31 @@ class BaseBuilder:
 }}"""
         return query, variables
 
+    def _parse_response(self, raw):
+        """Unwrap and convert a raw API response into a typed object."""
+        if self._response_model is None:
+            return raw
+        data = (raw or {}).get("data") or {}
+        if self._page_args:
+            from Anisearch.models.shared import PageResult
+            page_data = data.get("Page") or {}
+            collection_key = _root_to_collection(self._root_field)
+            return PageResult.from_dict(page_data, self._response_model, collection_key)
+        return self._response_model.from_dict(data.get(self._root_field))
+
     def execute(self, **kwargs):
         """Compile and execute the query synchronously."""
         query, variables = self._compile()
-        return self._request(variables, query, **kwargs)
+        raw = self._request(variables, query, **kwargs)
+        return self._parse_response(raw)
 
     async def execute_async(self, **kwargs):
         """Compile and execute the query asynchronously."""
         if self._async_request is None:
             raise RuntimeError("Async connection not available. Install aiohttp: pip install anisearch[async]")
         query, variables = self._compile()
-        return await self._async_request(variables, query, **kwargs)
+        raw = await self._async_request(variables, query, **kwargs)
+        return self._parse_response(raw)
 
 
 class BaseMutationBuilder:
@@ -241,6 +274,7 @@ class BaseMutationBuilder:
     _mutation_name = ""       # e.g. "SaveMediaListEntry"
     _default_fields = ["id"]  # default return fields
     _arg_types = {}           # {"mediaId": "Int", "status": "MediaListStatus", ...}
+    _response_model = None    # Override in subclasses with a dataclass type
 
     def __init__(self, request_fn, async_request_fn, args):
         self._request = request_fn
@@ -280,17 +314,26 @@ class BaseMutationBuilder:
 }}"""
         return query, variables
 
+    def _parse_response(self, raw):
+        """Unwrap and convert a raw mutation response into a typed object."""
+        if self._response_model is None:
+            return raw
+        data = (raw or {}).get("data") or {}
+        return self._response_model.from_dict(data.get(self._mutation_name))
+
     def execute(self, **kwargs):
         """Compile and execute the mutation synchronously."""
         query, variables = self._compile()
-        return self._request(variables, query, **kwargs)
+        raw = self._request(variables, query, **kwargs)
+        return self._parse_response(raw)
 
     async def execute_async(self, **kwargs):
         """Compile and execute the mutation asynchronously."""
         if self._async_request is None:
             raise RuntimeError("Async connection not available. Install aiohttp: pip install anisearch[async]")
         query, variables = self._compile()
-        return await self._async_request(variables, query, **kwargs)
+        raw = await self._async_request(variables, query, **kwargs)
+        return self._parse_response(raw)
 
 
 def _format_arg_value(v):

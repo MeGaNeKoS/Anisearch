@@ -15,6 +15,7 @@ from Anisearch.errors import (
     AnilistError, RateLimitError, ServerError, GraphQLError,
     ConnectionError as AnilistConnectionError,
 )
+from Anisearch.models import Media, Character, Staff, Studio, PageResult
 
 
 def _make_builder(cls, root_field, root_args=None):
@@ -1033,7 +1034,8 @@ class TestExecute(unittest.TestCase):
         args = mock_request.call_args
         self.assertIn("Media(id: $id)", args[0][1])
         self.assertEqual(args[0][0], {"id": 1})
-        self.assertEqual(result, {"data": {"Media": {"id": 1}}})
+        self.assertIsInstance(result, Media)
+        self.assertEqual(result.id, 1)
 
     def test_execute_async_raises_without_connection(self):
         b = MediaBuilder(None, None, "Media", {"id": 1})

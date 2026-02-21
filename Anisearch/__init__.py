@@ -7,6 +7,19 @@ except ImportError:
     __version__ = "0.0.0"
 
 from Anisearch.connection import Connection
+from Anisearch.models import (
+    Media, MediaTitle, MediaCoverImage, MediaTrailer, MediaTag,
+    MediaExternalLink, MediaStreamingEpisode, MediaRank, MediaList, MediaStats,
+    Character, CharacterName, CharacterImage,
+    Staff, StaffName, StaffImage,
+    Studio,
+    FuzzyDate, PageInfo, PageResult,
+    CharacterEdge, StaffEdge, StudioEdge, MediaRelationEdge,
+    DeleteResult, MediaListEntry, TextActivity, MessageActivity,
+    ActivityReply, UserFollowResult, FavouritesResult,
+    ReviewResult, RecommendationResult, ThreadResult, ThreadCommentResult,
+    ToggleLikeResult, UserResult,
+)
 from Anisearch.retry import RetryStrategy
 from Anisearch.fragment import Fragment
 from Anisearch.builders.media import MediaBuilder

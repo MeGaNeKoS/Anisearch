@@ -5,11 +5,21 @@ from __future__ import annotations
 from Anisearch.builders.base import BaseMutationBuilder
 
 
+def _model(mod_attr):
+    """Create a property that lazily imports a model class from Anisearch.models.mutations."""
+    @property
+    def _response_model(self):
+        from Anisearch.models import mutations as m
+        return getattr(m, mod_attr)
+    return _response_model
+
+
 # ── Media List ────────────────────────────────────────────────────────────────
 
 class SaveMediaListEntryMutation(BaseMutationBuilder):
     _mutation_name = "SaveMediaListEntry"
     _default_fields = ["id", "status"]
+    _response_model = _model("MediaListEntry")
     _arg_types = {
         "id": "Int",
         "mediaId": "Int",
@@ -33,6 +43,7 @@ class SaveMediaListEntryMutation(BaseMutationBuilder):
 class UpdateMediaListEntriesMutation(BaseMutationBuilder):
     _mutation_name = "UpdateMediaListEntries"
     _default_fields = ["id", "status"]
+    _response_model = _model("MediaListEntry")
     _arg_types = {
         "ids": "[Int]",
         "status": "MediaListStatus",
@@ -54,6 +65,7 @@ class UpdateMediaListEntriesMutation(BaseMutationBuilder):
 class DeleteMediaListEntryMutation(BaseMutationBuilder):
     _mutation_name = "DeleteMediaListEntry"
     _default_fields = ["deleted"]
+    _response_model = _model("DeleteResult")
     _arg_types = {
         "id": "Int",
     }
@@ -62,6 +74,7 @@ class DeleteMediaListEntryMutation(BaseMutationBuilder):
 class DeleteCustomListMutation(BaseMutationBuilder):
     _mutation_name = "DeleteCustomList"
     _default_fields = ["deleted"]
+    _response_model = _model("DeleteResult")
     _arg_types = {
         "customList": "String",
         "type": "MediaType",
@@ -73,6 +86,7 @@ class DeleteCustomListMutation(BaseMutationBuilder):
 class SaveTextActivityMutation(BaseMutationBuilder):
     _mutation_name = "SaveTextActivity"
     _default_fields = ["id", "type", "text"]
+    _response_model = _model("TextActivity")
     _arg_types = {
         "id": "Int",
         "text": "String",
@@ -82,6 +96,7 @@ class SaveTextActivityMutation(BaseMutationBuilder):
 class SaveMessageActivityMutation(BaseMutationBuilder):
     _mutation_name = "SaveMessageActivity"
     _default_fields = ["id", "type", "message"]
+    _response_model = _model("MessageActivity")
     _arg_types = {
         "id": "Int",
         "message": "String",
@@ -93,6 +108,7 @@ class SaveMessageActivityMutation(BaseMutationBuilder):
 class SaveListActivityMutation(BaseMutationBuilder):
     _mutation_name = "SaveListActivity"
     _default_fields = ["id", "type"]
+    _response_model = _model("ListActivity")
     _arg_types = {
         "id": "Int",
     }
@@ -101,6 +117,7 @@ class SaveListActivityMutation(BaseMutationBuilder):
 class DeleteActivityMutation(BaseMutationBuilder):
     _mutation_name = "DeleteActivity"
     _default_fields = ["deleted"]
+    _response_model = _model("DeleteResult")
     _arg_types = {
         "id": "Int",
     }
@@ -109,6 +126,7 @@ class DeleteActivityMutation(BaseMutationBuilder):
 class SaveActivityReplyMutation(BaseMutationBuilder):
     _mutation_name = "SaveActivityReply"
     _default_fields = ["id", "text"]
+    _response_model = _model("ActivityReply")
     _arg_types = {
         "id": "Int",
         "activityId": "Int",
@@ -119,6 +137,7 @@ class SaveActivityReplyMutation(BaseMutationBuilder):
 class DeleteActivityReplyMutation(BaseMutationBuilder):
     _mutation_name = "DeleteActivity"
     _default_fields = ["deleted"]
+    _response_model = _model("DeleteResult")
     _arg_types = {
         "id": "Int",
     }
@@ -129,6 +148,7 @@ class DeleteActivityReplyMutation(BaseMutationBuilder):
 class ToggleFollowMutation(BaseMutationBuilder):
     _mutation_name = "ToggleFollow"
     _default_fields = ["id", "name", "isFollowing"]
+    _response_model = _model("UserFollowResult")
     _arg_types = {
         "userId": "Int",
     }
@@ -137,6 +157,7 @@ class ToggleFollowMutation(BaseMutationBuilder):
 class ToggleFavouriteMutation(BaseMutationBuilder):
     _mutation_name = "ToggleFavourite"
     _default_fields = ["anime { nodes { id } }", "manga { nodes { id } }"]
+    _response_model = _model("FavouritesResult")
     _arg_types = {
         "animeId": "Int",
         "mangaId": "Int",
@@ -149,6 +170,7 @@ class ToggleFavouriteMutation(BaseMutationBuilder):
 class UpdateFavouriteOrderMutation(BaseMutationBuilder):
     _mutation_name = "UpdateFavouriteOrder"
     _default_fields = ["anime { nodes { id } }"]
+    _response_model = _model("FavouritesResult")
     _arg_types = {
         "animeIds": "[Int]",
         "mangaIds": "[Int]",
@@ -166,6 +188,7 @@ class UpdateFavouriteOrderMutation(BaseMutationBuilder):
 class ToggleLikeMutation(BaseMutationBuilder):
     _mutation_name = "ToggleLikeV2"
     _default_fields = ["id", "type"]
+    _response_model = _model("ToggleLikeResult")
     _arg_types = {
         "id": "Int",
         "type": "LikeableType",
@@ -177,6 +200,7 @@ class ToggleLikeMutation(BaseMutationBuilder):
 class SaveReviewMutation(BaseMutationBuilder):
     _mutation_name = "SaveReview"
     _default_fields = ["id", "summary", "body"]
+    _response_model = _model("ReviewResult")
     _arg_types = {
         "id": "Int",
         "mediaId": "Int",
@@ -190,6 +214,7 @@ class SaveReviewMutation(BaseMutationBuilder):
 class DeleteReviewMutation(BaseMutationBuilder):
     _mutation_name = "DeleteReview"
     _default_fields = ["deleted"]
+    _response_model = _model("DeleteResult")
     _arg_types = {
         "id": "Int",
     }
@@ -198,6 +223,7 @@ class DeleteReviewMutation(BaseMutationBuilder):
 class RateReviewMutation(BaseMutationBuilder):
     _mutation_name = "RateReview"
     _default_fields = ["id", "rating", "ratingAmount"]
+    _response_model = _model("ReviewResult")
     _arg_types = {
         "reviewId": "Int",
         "rating": "ReviewRating",
@@ -209,6 +235,7 @@ class RateReviewMutation(BaseMutationBuilder):
 class SaveRecommendationMutation(BaseMutationBuilder):
     _mutation_name = "SaveRecommendation"
     _default_fields = ["id", "rating"]
+    _response_model = _model("RecommendationResult")
     _arg_types = {
         "mediaId": "Int",
         "mediaRecommendationId": "Int",
@@ -221,6 +248,7 @@ class SaveRecommendationMutation(BaseMutationBuilder):
 class SaveThreadMutation(BaseMutationBuilder):
     _mutation_name = "SaveThread"
     _default_fields = ["id", "title"]
+    _response_model = _model("ThreadResult")
     _arg_types = {
         "id": "Int",
         "title": "String",
@@ -235,6 +263,7 @@ class SaveThreadMutation(BaseMutationBuilder):
 class DeleteThreadMutation(BaseMutationBuilder):
     _mutation_name = "DeleteThread"
     _default_fields = ["deleted"]
+    _response_model = _model("DeleteResult")
     _arg_types = {
         "id": "Int",
     }
@@ -243,6 +272,7 @@ class DeleteThreadMutation(BaseMutationBuilder):
 class ToggleThreadSubscriptionMutation(BaseMutationBuilder):
     _mutation_name = "ToggleThreadSubscription"
     _default_fields = ["id", "isSubscribed"]
+    _response_model = _model("ThreadResult")
     _arg_types = {
         "threadId": "Int",
         "subscribe": "Boolean",
@@ -252,6 +282,7 @@ class ToggleThreadSubscriptionMutation(BaseMutationBuilder):
 class SaveThreadCommentMutation(BaseMutationBuilder):
     _mutation_name = "SaveThreadComment"
     _default_fields = ["id", "comment"]
+    _response_model = _model("ThreadCommentResult")
     _arg_types = {
         "id": "Int",
         "threadId": "Int",
@@ -263,6 +294,7 @@ class SaveThreadCommentMutation(BaseMutationBuilder):
 class DeleteThreadCommentMutation(BaseMutationBuilder):
     _mutation_name = "DeleteThreadComment"
     _default_fields = ["deleted"]
+    _response_model = _model("DeleteResult")
     _arg_types = {
         "id": "Int",
     }
@@ -273,6 +305,7 @@ class DeleteThreadCommentMutation(BaseMutationBuilder):
 class UpdateUserMutation(BaseMutationBuilder):
     _mutation_name = "UpdateUser"
     _default_fields = ["id", "name"]
+    _response_model = _model("UserResult")
     _arg_types = {
         "about": "String",
         "titleLanguage": "UserTitleLanguage",
@@ -296,6 +329,7 @@ class UpdateUserMutation(BaseMutationBuilder):
 class UpdateAniChartSettingsMutation(BaseMutationBuilder):
     _mutation_name = "UpdateAniChartSettings"
     _default_fields = ["id"]
+    _response_model = _model("UserResult")
     _arg_types = {
         "titleLanguage": "String",
         "outgoingLinkProvider": "String",
@@ -307,6 +341,7 @@ class UpdateAniChartSettingsMutation(BaseMutationBuilder):
 class UpdateAniChartHighlightsMutation(BaseMutationBuilder):
     _mutation_name = "UpdateAniChartHighlights"
     _default_fields = ["id"]
+    _response_model = _model("UserResult")
     _arg_types = {
         "highlights": "[AniChartHighlightInput]",
     }

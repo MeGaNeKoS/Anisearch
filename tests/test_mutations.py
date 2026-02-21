@@ -281,7 +281,9 @@ class TestMutationExecute(unittest.TestCase):
         self.assertEqual(variables, {"mediaId": 1, "status": "CURRENT"})
         self.assertIn("mutation", query)
         self.assertIn("SaveMediaListEntry", query)
-        self.assertEqual(result, {"data": {"SaveMediaListEntry": {"id": 1}}})
+        from Anisearch.models import MediaListEntry
+        self.assertIsInstance(result, MediaListEntry)
+        self.assertEqual(result.id, 1)
 
     def test_execute_with_fields_override(self):
         mock_request = MagicMock(return_value={"data": {}})
