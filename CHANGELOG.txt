@@ -1,10 +1,15 @@
 Change Log
 ==========
-2.0.0 (2025)
+2.1.0 (21/02/2026)
+- Add mutation builders for all AniList mutations (media lists, activities, threads, reviews, recommendations, user settings)
+- Add Literal type hints for builder field selection (IDE autocomplete)
+- Add comprehensive test coverage
+
+2.0.0 (21/02/2026)
 - Complete rewrite with declarative GraphQL query builders
 - Builder API for media, character, staff, and studio queries
 - Reusable fragments via Fragment class
-- Pagination support with .paginate()
+- Pagination support with .page()
 - Configurable retry strategies via RetryStrategy
 - Async support with .execute_async()
 - Raw query escape hatch with .raw_query()
