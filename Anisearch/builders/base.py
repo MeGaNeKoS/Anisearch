@@ -279,8 +279,18 @@ class BaseMutationBuilder:
     def __init__(self, request_fn, async_request_fn, args):
         self._request = request_fn
         self._async_request = async_request_fn
-        self._args = args
+        self._args = self._normalize_args(args)
         self._fields_override = None
+
+    @staticmethod
+    def _normalize_args(args):
+        """Convert snake_case keyword arguments to camelCase for GraphQL."""
+        result = {}
+        for key, value in args.items():
+            parts = key.split("_")
+            camel = parts[0] + "".join(p.capitalize() for p in parts[1:])
+            result[camel] = value
+        return result
 
     def fields(self, *field_names):
         """Select which fields to return from the mutation."""
