@@ -1,5 +1,15 @@
 """Media query builder — complete coverage of AniList Media type (55 fields)."""
 
+from __future__ import annotations
+
+import sys
+from typing import Callable, Optional
+
+if sys.version_info >= (3, 11):
+    from typing import Literal
+else:
+    from typing_extensions import Literal
+
 from Anisearch.builders.base import BaseBuilder, _format_arg_value
 
 
@@ -153,64 +163,90 @@ class MediaBuilder(BaseBuilder):
 
     # --- Object fields (sub-selections) ---
 
-    def title(self, *fields):
-        """Sub-fields: "romaji", "english", "native", "userPreferred"."""
+    def title(
+        self, *fields: Literal["romaji", "english", "native", "userPreferred"]
+    ) -> MediaBuilder:
         self._add_object("title", fields, defaults=("romaji", "english", "native", "userPreferred"))
         return self
 
-    def cover_image(self, *fields):
-        """Sub-fields: "extraLarge", "large", "medium", "color"."""
+    def cover_image(
+        self, *fields: Literal["extraLarge", "large", "medium", "color"]
+    ) -> MediaBuilder:
         self._add_object("coverImage", fields, defaults=("extraLarge", "large", "color"))
         return self
 
-    def start_date(self, *fields):
+    def start_date(
+        self, *fields: Literal["year", "month", "day"]
+    ) -> MediaBuilder:
         self._add_object("startDate", fields, defaults=("year", "month", "day"))
         return self
 
-    def end_date(self, *fields):
+    def end_date(
+        self, *fields: Literal["year", "month", "day"]
+    ) -> MediaBuilder:
         self._add_object("endDate", fields, defaults=("year", "month", "day"))
         return self
 
-    def trailer(self, *fields):
-        """Sub-fields: "id", "site", "thumbnail"."""
+    def trailer(
+        self, *fields: Literal["id", "site", "thumbnail"]
+    ) -> MediaBuilder:
         self._add_object("trailer", fields, defaults=("id", "site", "thumbnail"))
         return self
 
-    def next_airing_episode(self, *fields):
-        """Sub-fields: "id", "airingAt", "timeUntilAiring", "episode", "mediaId"."""
+    def next_airing_episode(
+        self, *fields: Literal["id", "airingAt", "timeUntilAiring", "episode", "mediaId"]
+    ) -> MediaBuilder:
         self._add_object("nextAiringEpisode", fields,
                          defaults=("airingAt", "timeUntilAiring", "episode"))
         return self
 
-    def tags(self, *fields):
-        """Sub-fields: "id", "name", "description", "category", "rank",
-        "isGeneralSpoiler", "isMediaSpoiler", "isAdult", "userId"."""
+    def tags(
+        self,
+        *fields: Literal[
+            "id", "name", "description", "category", "rank",
+            "isGeneralSpoiler", "isMediaSpoiler", "isAdult", "userId"
+        ]
+    ) -> MediaBuilder:
         self._add_object("tags", fields,
                          defaults=("id", "name", "description", "category", "rank",
                                    "isGeneralSpoiler", "isMediaSpoiler", "isAdult"))
         return self
 
-    def external_links(self, *fields):
-        """Sub-fields: "id", "url", "site", "siteId", "type", "language",
-        "color", "icon", "notes", "isDisabled"."""
+    def external_links(
+        self,
+        *fields: Literal[
+            "id", "url", "site", "siteId", "type", "language",
+            "color", "icon", "notes", "isDisabled"
+        ]
+    ) -> MediaBuilder:
         self._add_object("externalLinks", fields,
                          defaults=("id", "url", "site", "type", "language", "color", "icon", "notes", "isDisabled"))
         return self
 
-    def streaming_episodes(self, *fields):
-        """Sub-fields: "title", "thumbnail", "url", "site"."""
+    def streaming_episodes(
+        self, *fields: Literal["title", "thumbnail", "url", "site"]
+    ) -> MediaBuilder:
         self._add_object("streamingEpisodes", fields,
                          defaults=("title", "thumbnail", "url", "site"))
         return self
 
-    def rankings(self, *fields):
-        """Sub-fields: "id", "rank", "type", "format", "year", "season", "allTime", "context"."""
+    def rankings(
+        self,
+        *fields: Literal[
+            "id", "rank", "type", "format", "year", "season", "allTime", "context"
+        ]
+    ) -> MediaBuilder:
         self._add_object("rankings", fields,
                          defaults=("id", "rank", "type", "format", "year", "season", "allTime", "context"))
         return self
 
-    def media_list_entry(self, *fields):
-        """Sub-fields: any MediaList fields like "id", "status", "score", "progress", etc."""
+    def media_list_entry(
+        self,
+        *fields: Literal[
+            "id", "status", "score", "progress", "progressVolumes",
+            "repeat", "priority", "private", "notes", "startedAt", "completedAt"
+        ]
+    ) -> MediaBuilder:
         self._add_object("mediaListEntry", fields, defaults=("id", "status", "score"))
         return self
 

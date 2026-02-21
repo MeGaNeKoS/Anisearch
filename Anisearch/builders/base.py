@@ -1,6 +1,9 @@
 """Base builder with shared compile/execute logic."""
 
+from __future__ import annotations
+
 import re
+from typing import Any, Dict, Optional, Tuple
 
 
 def _snake_to_camel(name):

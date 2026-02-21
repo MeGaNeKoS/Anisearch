@@ -1,5 +1,15 @@
 """Studio query builder — complete coverage of AniList Studio type (7 fields)."""
 
+from __future__ import annotations
+
+import sys
+from typing import Callable, Optional
+
+if sys.version_info >= (3, 11):
+    from typing import Literal
+else:
+    from typing_extensions import Literal
+
 from Anisearch.builders.base import BaseBuilder
 
 

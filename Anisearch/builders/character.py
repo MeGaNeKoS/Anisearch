@@ -1,5 +1,15 @@
 """Character query builder — complete coverage of AniList Character type (14 fields)."""
 
+from __future__ import annotations
+
+import sys
+from typing import Callable, Optional
+
+if sys.version_info >= (3, 11):
+    from typing import Literal
+else:
+    from typing_extensions import Literal
+
 from Anisearch.builders.base import BaseBuilder
 
 
@@ -53,20 +63,27 @@ class CharacterBuilder(BaseBuilder):
 
     # --- Object fields ---
 
-    def name(self, *fields):
-        """Sub-fields: "first", "middle", "last", "full", "native",
-        "userPreferred", "alternative", "alternativeSpoiler"."""
+    def name(
+        self,
+        *fields: Literal[
+            "first", "middle", "last", "full", "native",
+            "userPreferred", "alternative", "alternativeSpoiler"
+        ]
+    ) -> CharacterBuilder:
         self._add_object("name", fields,
                          defaults=("first", "middle", "last", "full", "native",
                                    "userPreferred", "alternative", "alternativeSpoiler"))
         return self
 
-    def image(self, *fields):
-        """Sub-fields: "large", "medium"."""
+    def image(
+        self, *fields: Literal["large", "medium"]
+    ) -> CharacterBuilder:
         self._add_object("image", fields, defaults=("large",))
         return self
 
-    def date_of_birth(self, *fields):
+    def date_of_birth(
+        self, *fields: Literal["year", "month", "day"]
+    ) -> CharacterBuilder:
         self._add_object("dateOfBirth", fields, defaults=("year", "month", "day"))
         return self
 

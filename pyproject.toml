@@ -24,7 +24,10 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
 ]
-dependencies = ["requests"]
+dependencies = [
+    "requests",
+    "typing_extensions>=4.0; python_version < '3.11'",
+]
 
 [project.optional-dependencies]
 async = ["aiohttp"]
